@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package protobuf;
+
+option java_package = "examples.protobuf";
+option java_outer_classname = "Request";
+
+message CreateRequest {
+  string name = 1;
+}
+
+message DeleteRequest {
+  string name = 1;
+}
