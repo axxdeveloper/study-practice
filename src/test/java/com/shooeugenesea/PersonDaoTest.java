@@ -40,7 +40,6 @@ class PersonDaoTest {
                     "spring.datasource.username=" + postgreSQLContainer.getUsername(),
                     "spring.datasource.password=" + postgreSQLContainer.getPassword()
             );
-			System.out.println(applicationContext.getEnvironment());
         }
     }
 	
