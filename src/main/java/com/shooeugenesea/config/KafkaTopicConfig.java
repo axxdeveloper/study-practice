@@ -13,6 +13,9 @@ import java.util.Map;
 @Configuration
 public class KafkaTopicConfig {
 
+    public static final String REQUEST_TOPIC = "requestTopic";
+    public static final String RESPONSE_TOPIC = "responseTopic";
+
     @Value(value = "${kafka.bootstrapAddress}")
     private String bootstrapAddress;
 
@@ -24,8 +27,13 @@ public class KafkaTopicConfig {
     }
     
     @Bean
-    public NewTopic testTopic() {
-         return new NewTopic("test", 1, (short) 1);
+    public NewTopic requestTopic() {
+         return new NewTopic(REQUEST_TOPIC, 1, (short) 1);
+    }
+    
+    @Bean
+    public NewTopic responseTopic() {
+         return new NewTopic(RESPONSE_TOPIC, 1, (short) 1);
     }
 
 }
