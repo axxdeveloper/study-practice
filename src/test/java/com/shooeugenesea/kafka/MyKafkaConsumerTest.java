@@ -15,10 +15,14 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.time.Duration;
@@ -30,20 +34,22 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-@RunWith(SpringRunner.class) // inject PersonDao
 @SpringBootTest
-public class TestKafkaConsumerTest extends IntegrationTest {
+class MyKafkaConsumerTest extends IntegrationTest {
 
     @Autowired
     private PersonDao personDao;
+    
+    @Autowired
+    private KafkaTemplate kafkaTemplate;
 
     @Test
-    public void test() throws InterruptedException, ExecutionException {
+    void testConsumeMessage() throws InterruptedException, ExecutionException {
         String name = UUID.randomUUID().toString();
         CountDownLatch latch = new CountDownLatch(1);
         final Consumer<String, String> consumer = consumer();
         ConsumerRecords<String, String> records = null;
-        producer().send(new ProducerRecord<>(KafkaTopicConfig.RESPONSE_TOPIC, "", name)).get();
+        kafkaTemplate.send(new ProducerRecord<>(KafkaTopicConfig.REQUEST_TOPIC, "", name)).get();
         while (latch.getCount() > 0 && !(records = consumer.poll(Duration.ofSeconds(10))).isEmpty()) {
             records.forEach(record -> {
                 System.out.println(record.value());
@@ -57,7 +63,7 @@ public class TestKafkaConsumerTest extends IntegrationTest {
         Assert.assertTrue(latch.await(20, TimeUnit.SECONDS));
     }
     
-    private static Producer<String, String> producer() {
+    private Producer<String, String> producer() {
         Properties props = new Properties();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers());
         props.put(ProducerConfig.CLIENT_ID_CONFIG, "hardCodedClientId");
@@ -66,7 +72,7 @@ public class TestKafkaConsumerTest extends IntegrationTest {
         return new KafkaProducer<>(props);
     }
     
-    private static Consumer<String, String> consumer() {
+    private Consumer<String, String> consumer() {
         final Properties props = new Properties();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers());
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
@@ -75,7 +81,7 @@ public class TestKafkaConsumerTest extends IntegrationTest {
         props.put(ConsumerConfig.GROUP_ID_CONFIG, "hardCodedGroupId");
         
         final Consumer<String, String> consumer = new KafkaConsumer<>(props);
-        consumer.subscribe(Collections.singletonList(KafkaTopicConfig.REQUEST_TOPIC));
+        consumer.subscribe(Collections.singletonList(KafkaTopicConfig.RESPONSE_TOPIC));
         return consumer;
       }
     

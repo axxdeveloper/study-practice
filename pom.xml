@@ -11,8 +11,8 @@
 	<groupId>shooeugenesea</groupId>
 	<artifactId>study-practice</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>demo</name>
-	<description>Demo project for Spring Boot</description>
+	<name>study-practice</name>
+	<description>study-practice</description>
 	<properties>
 		<java.version>11</java.version>
 		<testcontainers.version>1.16.0</testcontainers.version>

@@ -10,22 +10,22 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 
 @Service
-public class TestKafkaConsumer {
+public class MyKafkaConsumer {
     
     private KafkaTemplate<String, String> kafkaTemplate;
     private PersonDao personDao;
     
     @Autowired
-    public TestKafkaConsumer(KafkaTemplate<String, String> kafkaTemplate, PersonDao personDao) {
+    public MyKafkaConsumer(KafkaTemplate<String, String> kafkaTemplate, PersonDao personDao) {
         this.kafkaTemplate = kafkaTemplate;
         this.personDao = personDao;
     }
     
-    @KafkaListener(topics = KafkaTopicConfig.RESPONSE_TOPIC, groupId = "anyGroupId")
-    public void listenGroupFoo(@Payload String message) {
+    @KafkaListener(topics = KafkaTopicConfig.REQUEST_TOPIC, groupId = "anyGroupId")
+    public void consumeMessage(@Payload String message) {
         System.out.println("Received Message: " + message);
         Person persisted = personDao.save(new Person(message));
-        kafkaTemplate.send(KafkaTopicConfig.REQUEST_TOPIC, persisted.getId().toString());
+        kafkaTemplate.send(KafkaTopicConfig.RESPONSE_TOPIC, persisted.getId().toString());
     }
 
 }

@@ -1,9 +1,12 @@
 package com.shooeugenesea;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.Assert;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.support.TestPropertySourceUtils;
 import org.testcontainers.containers.KafkaContainer;
@@ -12,8 +15,9 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
+@DirtiesContext // used to re-initialize applicationContext, because testcontainer will be restarted with different exposed ports
 @Testcontainers
-@ContextConfiguration(initializers = IntegrationTest.DockerPostgreDataSourceInitializer.class)
+@ContextConfiguration(initializers = IntegrationTest.TestcontainersInitializer.class)
 public abstract class IntegrationTest {
 
     @Container
@@ -23,7 +27,7 @@ public abstract class IntegrationTest {
     @Container
     protected static KafkaContainer kafkaContainer = new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:5.4.3"));
 
-	public static class DockerPostgreDataSourceInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
+	public static class TestcontainersInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
         
         @Override
         public void initialize(ConfigurableApplicationContext applicationContext) {
@@ -36,17 +40,23 @@ public abstract class IntegrationTest {
             );
         }
     }
-	
-	@BeforeClass
-	public static void init() {
+
+	@BeforeAll
+	public static void beforeClass() {
 		postgreSQLContainer.start();
 		kafkaContainer.start();
 	}
 
-	@AfterClass
-	public static void after() {
+	@AfterAll
+	public static void afterClass() {
 		postgreSQLContainer.stop();
 		kafkaContainer.stop();
+	}
+
+	@Test
+	public void test() {
+		Assert.assertTrue(postgreSQLContainer.isRunning());
+		Assert.assertTrue(kafkaContainer.isRunning());
 	}
 
 }
