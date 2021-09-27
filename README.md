@@ -16,10 +16,10 @@
 
 # Example
 * The service 
-** listen to the Kafka requestTopic
-** Persist Person data
-** send the persisted ID to the Kafka responseTopic
+  * listen to the Kafka requestTopic
+  * Persist Person data
+  * send the persisted ID to the Kafka responseTopic
 * Test
-** send message to Kafka requestTopic
-** Consume message from Kafka responseTopic
-** Verify Person data in DB
+  * send message to Kafka requestTopic
+  * Consume message from Kafka responseTopic
+  * Verify Person data in DB
