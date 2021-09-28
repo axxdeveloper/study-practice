@@ -16,53 +16,62 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationContextInitializer;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.support.TestPropertySourceUtils;
 
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import static com.shooeugenesea.config.KafkaTopicConfig.RESPONSE_TOPIC;
+import static com.shooeugenesea.config.KafkaTopicConfig.RESPONSE_TOPIC_2;
+
 @SpringBootTest
-class MyKafkaConsumerTest extends IntegrationTest {
+@ContextConfiguration(initializers = KafkaTransactionTest.ThrowErrorInitializer.class)
+public class KafkaTransactionTest extends IntegrationTest {
 
     @Autowired
     private PersonDao personDao;
     
-    @Autowired
-    private KafkaTemplate kafkaTemplate;
-
+    public static class ThrowErrorInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
+        
+        @Override
+        public void initialize(ConfigurableApplicationContext applicationContext) {
+            TestPropertySourceUtils.addInlinedPropertiesToEnvironment(
+                    applicationContext,
+                    "throw.error.enable=true"
+            );
+        }
+    }
+    
     @Test
-    void testConsumeMessage() throws InterruptedException, ExecutionException {
+    void testKafkaTransaction_noMessageWillBeSent() throws ExecutionException, InterruptedException {
         String name = UUID.randomUUID().toString();
-        CountDownLatch latch = new CountDownLatch(1);
         final Consumer<String, String> consumer = consumer();
         ConsumerRecords<String, String> records = null;
         producer().send(new ProducerRecord<>(KafkaTopicConfig.REQUEST_TOPIC, "", name)).get();
-        while (latch.getCount() > 0 && !(records = consumer.poll(Duration.ofSeconds(10))).isEmpty()) {
-            records.forEach(record -> {
-                System.out.println(record.value());
-                String id = record.value();
-                Optional<Person> optPerson = personDao.findById(UUID.fromString(id));
-                if (optPerson.isPresent() && name.equals(optPerson.get().getName())) {
-                    latch.countDown();
-                }
-            });
+        Set<String> topics = new HashSet<>(Arrays.asList(RESPONSE_TOPIC, RESPONSE_TOPIC_2));
+        Assert.assertEquals(2, topics.size());
+        CountDownLatch latch = new CountDownLatch(topics.size());
+        while (latch.getCount() > 0 && consumer.poll(Duration.ofSeconds(10)).isEmpty()) {
+            latch.countDown();
         }
-        Assert.assertTrue(latch.await(20, TimeUnit.SECONDS));
+        Assert.assertTrue(latch.await(10, TimeUnit.SECONDS));
     }
-    
+
     private Producer<String, String> producer() {
         Properties props = new Properties();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers());
@@ -71,7 +80,7 @@ class MyKafkaConsumerTest extends IntegrationTest {
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
         return new KafkaProducer<>(props);
     }
-    
+
     private Consumer<String, String> consumer() {
         final Properties props = new Properties();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers());
@@ -81,9 +90,8 @@ class MyKafkaConsumerTest extends IntegrationTest {
         props.put(ConsumerConfig.GROUP_ID_CONFIG, "hardCodedGroupId");
         
         final Consumer<String, String> consumer = new KafkaConsumer<>(props);
-        consumer.subscribe(Collections.singletonList(KafkaTopicConfig.RESPONSE_TOPIC));
+        consumer.subscribe(Arrays.asList(RESPONSE_TOPIC, RESPONSE_TOPIC_2));
         return consumer;
-      }
-    
-    
+    }
+
 }

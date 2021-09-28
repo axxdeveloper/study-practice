@@ -15,6 +15,7 @@ public class KafkaTopicConfig {
 
     public static final String REQUEST_TOPIC = "requestTopic";
     public static final String RESPONSE_TOPIC = "responseTopic";
+    public static final String RESPONSE_TOPIC_2 = "responseTopic2";
 
     @Value(value = "${kafka.bootstrapAddress}")
     private String bootstrapAddress;
@@ -34,6 +35,11 @@ public class KafkaTopicConfig {
     @Bean
     public NewTopic responseTopic() {
          return new NewTopic(RESPONSE_TOPIC, 1, (short) 1);
+    }
+    
+    @Bean
+    public NewTopic responseTopic2() {
+         return new NewTopic(RESPONSE_TOPIC_2, 1, (short) 1);
     }
 
 }
