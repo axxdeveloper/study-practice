@@ -17,6 +17,12 @@ public class KafkaTopicConfig {
     public static final String RESPONSE_TOPIC = "responseTopic";
     public static final String RESPONSE_TOPIC_2 = "responseTopic2";
 
+    public static final String TX_REQ_TOPIC_1 = "txReqTopic1";
+    public static final String TX_REQ_TOPIC_2 = "txReqTopic2";
+    public static final String TX_RES_TOPIC_1 = "txResTopic1";
+    public static final String TX_RES_TOPIC_2 = "txResTopic2";
+    
+
     @Value(value = "${kafka.bootstrapAddress}")
     private String bootstrapAddress;
 
@@ -28,18 +34,38 @@ public class KafkaTopicConfig {
     }
     
     @Bean
+    public NewTopic txReqTopic1() {
+        return new NewTopic(TX_REQ_TOPIC_1, 2, (short)1);
+    }
+    
+    @Bean
+    public NewTopic txReqTopic2() {
+        return new NewTopic(TX_REQ_TOPIC_2, 2, (short)1);
+    }
+    
+    @Bean
+    public NewTopic txResTopic1() {
+        return new NewTopic(TX_RES_TOPIC_1, 2, (short)1);
+    }
+    
+    @Bean
+    public NewTopic txResTopic2() {
+        return new NewTopic(TX_RES_TOPIC_2, 2, (short)1);
+    }
+    
+    @Bean
     public NewTopic requestTopic() {
-         return new NewTopic(REQUEST_TOPIC, 1, (short) 1);
+         return new NewTopic(REQUEST_TOPIC, 2, (short) 1);
     }
     
     @Bean
     public NewTopic responseTopic() {
-         return new NewTopic(RESPONSE_TOPIC, 1, (short) 1);
+         return new NewTopic(RESPONSE_TOPIC, 2, (short) 1);
     }
     
     @Bean
     public NewTopic responseTopic2() {
-         return new NewTopic(RESPONSE_TOPIC_2, 1, (short) 1);
+         return new NewTopic(RESPONSE_TOPIC_2, 2, (short) 1);
     }
 
 }
