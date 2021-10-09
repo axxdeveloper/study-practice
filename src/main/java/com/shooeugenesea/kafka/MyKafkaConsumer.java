@@ -9,9 +9,8 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-//@Service
+@Service
 public class MyKafkaConsumer {
     
     private KafkaTemplate<String, String> kafkaTemplate;

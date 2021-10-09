@@ -3,7 +3,6 @@ package com.shooeugenesea.kafka;
 import com.shooeugenesea.IntegrationTest;
 import com.shooeugenesea.config.KafkaTopicConfig;
 import com.shooeugenesea.dao.PersonDao;
-import com.shooeugenesea.entity.Person;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -20,15 +19,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.support.TestPropertySourceUtils;
 
 import java.time.Duration;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
@@ -40,8 +36,8 @@ import static com.shooeugenesea.config.KafkaTopicConfig.RESPONSE_TOPIC;
 import static com.shooeugenesea.config.KafkaTopicConfig.RESPONSE_TOPIC_2;
 
 @SpringBootTest
-@ContextConfiguration(initializers = KafkaTransactionTest.ThrowErrorInitializer.class)
-public class KafkaTransactionTest extends IntegrationTest {
+@ContextConfiguration(initializers = KafkaErrorTransactionTest.ThrowErrorInitializer.class)
+public class KafkaErrorTransactionTest extends IntegrationTest {
 
     @Autowired
     private PersonDao personDao;
