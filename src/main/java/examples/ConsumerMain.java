@@ -43,6 +43,7 @@ public class ConsumerMain {
         while (true) {
             ConsumerRecords<String, String> records = consumer.poll(Duration.ofSeconds(5));
             if (records.count() > 0) {
+                records.forEach(c -> System.out.println(c.value()));
                 total += records.count();
                 System.out.println("receive:" + records.count() + " messages.");
             } else {
