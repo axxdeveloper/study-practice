@@ -12,12 +12,15 @@ import org.apache.kafka.streams.kstream.KStream;
 import java.util.Properties;
 import java.util.UUID;
 
-public class KStreamMain {
+public class KStreamFiltersMain {
 
     public static void main(String[] args) {
         StreamsBuilder builder = new StreamsBuilder();
         KStream<String, String> stream = builder.stream(ProducerMain.TOPIC, Consumed.with(Serdes.String(), Serdes.String()));
-        stream.foreach((k,v) -> {
+        stream
+            .filterNot((k,v) -> k.length() == 0)
+            .filter((k,v) -> v.indexOf('2') > -1)
+            .foreach((k,v) -> {
             System.out.println(k + ":" + v);
         });
         KafkaStreams kafkaStreams = new KafkaStreams(builder.build(), kafkaProps("localhost:9092"));
