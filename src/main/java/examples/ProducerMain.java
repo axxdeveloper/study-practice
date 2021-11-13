@@ -19,11 +19,13 @@ import java.util.concurrent.TimeoutException;
 public class ProducerMain {
 
     public static final String TOPIC = "mytopic";
+    public static final String TOPIC_TARGET = "my-target-topic"; 
     public static int MSG_COUNT = 100;
 
     public static void main(String[] args) throws InterruptedException, ExecutionException, TimeoutException {
         Properties kafkaProps = kafkaProps("localhost:9092");
         createTopicIfNotExist(kafkaProps, TOPIC);
+        createTopicIfNotExist(kafkaProps, TOPIC_TARGET);
         sendMessages(kafkaProps, TOPIC);
     }
 

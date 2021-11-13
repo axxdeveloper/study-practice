@@ -13,12 +13,16 @@ import java.util.stream.Collectors;
 
 public class ConsumerMain {
 
+    private static final String TOPIC = ProducerMain.TOPIC_TARGET;
+
     public static void main(String[] args) {
         int total = 0;
         Properties kafkaProps = kafkaProps("localhost:9092");
         try (KafkaConsumer<String, String> consumer = new KafkaConsumer<>(kafkaProps)) {
 //            consumer.subscribe(Arrays.asList(ProducerMain.TOPIC));
-            consumer.assign(consumer.partitionsFor(ProducerMain.TOPIC).stream().map(p -> new TopicPartition(ProducerMain.TOPIC, p.partition())).collect(Collectors.toList()));
+            consumer.assign(consumer.partitionsFor(TOPIC)
+                .stream().map(p -> new TopicPartition(TOPIC, p.partition()))
+                .collect(Collectors.toList()));
 
             resetOffset(consumer);
             total += consumeAllMessages(consumer);
@@ -33,8 +37,8 @@ public class ConsumerMain {
     }
 
     private static void resetOffset(KafkaConsumer<String, String> consumer) {
-        consumer.partitionsFor(ProducerMain.TOPIC).forEach(p -> {
-            consumer.seek(new TopicPartition(ProducerMain.TOPIC, p.partition()), 0);
+        consumer.partitionsFor(TOPIC).forEach(p -> {
+            consumer.seek(new TopicPartition(TOPIC, p.partition()), 0);
         });
     }
 

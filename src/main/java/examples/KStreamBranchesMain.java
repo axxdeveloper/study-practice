@@ -7,6 +7,7 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.Produced;
 
 import java.util.Arrays;
 import java.util.Properties;
@@ -27,6 +28,12 @@ public class KStreamBranchesMain {
         
         System.out.println("===============> flatMap =============>");
         stream.flatMap((k,v) -> Arrays.asList(KeyValue.pair(k+"/"+k,v+"/"+v))).foreach((k, v) -> System.out.println(k + ":" + v));
+
+        System.out.println("===============> to ==================>");
+        stream.mapValues(v -> v + "-to")
+            .through(ProducerMain.TOPIC_TARGET, Produced.with(Serdes.String(), Serdes.String()))
+            .foreach((k,v) -> System.out.println(v));
+        
         
         KafkaStreams kafkaStreams = new KafkaStreams(builder.build(), kafkaProps("localhost:9092"));
         kafkaStreams.start();
