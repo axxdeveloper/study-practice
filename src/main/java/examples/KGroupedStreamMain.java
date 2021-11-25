@@ -27,8 +27,8 @@ import java.util.stream.IntStream;
 
 public class KGroupedStreamMain {
 
-    private static final String TOPIC_STOCK = KGroupedStreamMain.class.getName() + "_stock2";
-    private static final String TOPIC_PRICE = KGroupedStreamMain.class.getName() + "_price2";
+    private static final String TOPIC_STOCK = KGroupedStreamMain.class.getName() + "_stock_" + UUID.randomUUID().toString();
+    private static final String TOPIC_PRICE = KGroupedStreamMain.class.getName() + "_price_" + UUID.randomUUID().toString();
     private static final String STOCK_VT_KEY = "VT";
     public static final String STOCK_VT_NAME = "Vanguard Total World Stock ETF";
 
@@ -38,14 +38,16 @@ public class KGroupedStreamMain {
             createTopicIfNotExist(kafkaProps, TOPIC_STOCK, TOPIC_PRICE);
         
             StreamsBuilder builder = new StreamsBuilder();
-            KStream<String, String> priceStream = builder.stream(TOPIC_PRICE, Consumed.with(Serdes.String(), Serdes.String()));
-            priceStream.groupByKey(Serialized.with(Serdes.String(), Serdes.String())).count().toStream().foreach((k, v) -> {
-                System.out.println(k + ":" + v);
+            KStream<String, Integer> priceStream = builder.stream(TOPIC_PRICE, Consumed.with(Serdes.String(), Serdes.Integer()));
+            priceStream.groupByKey(Serialized.with(Serdes.String(), Serdes.Integer())).count().toStream().foreach((k, v) -> {
+                System.out.println("groupByKey => " + k + ":" + v);
+            });
+            priceStream.groupBy(((k,v) -> String.valueOf(v % 3)), Serialized.with(Serdes.String(), Serdes.Integer())).count().toStream().foreach((k,v) -> {
+                System.out.println("groupBy => " + k + ":" + v);
             });
             
             KafkaStreams kafkaStreams = new KafkaStreams(builder.build(), kafkaProps());
-            kafkaStreams.start();   
-
+            kafkaStreams.start();
             sendStockPrices(kafkaProps, STOCK_VT_KEY, IntStream.range(0,100).toArray());
         } catch (Exception ex) {
             ex.printStackTrace();
