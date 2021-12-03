@@ -7,8 +7,10 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.errors.InvalidStateStoreException;
 import org.apache.kafka.streams.kstream.Aggregator;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.Initializer;
@@ -17,15 +19,22 @@ import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.kstream.KeyValueMapper;
 import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.Serialized;
+import org.apache.kafka.streams.processor.StateStore;
+import org.apache.kafka.streams.state.QueryableStoreType;
+import org.apache.kafka.streams.state.QueryableStoreTypes;
+import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
+import org.apache.kafka.streams.state.StoreBuilder;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -61,15 +70,35 @@ public class KGroupedStreamAggregateMain {
             
             KafkaStreams kafkaStreams = new KafkaStreams(builder.build(), kafkaProps());
             kafkaStreams.start();
-            sendStockPrices(kafkaProps, STOCK_VT_KEY, IntStream.range(0,100).toArray());
+            new Thread(() -> sendStockPrices(kafkaProps, STOCK_VT_KEY, IntStream.range(0,100).toArray())).start();
+            System.out.println("store");
+            ReadOnlyKeyValueStore<String, Integer> store = waitUntilStoreIsQueryable(TOPIC_PRICE, QueryableStoreTypes.keyValueStore(), kafkaStreams);
+            store.all().forEachRemaining(kv -> System.out.println("store => " + kv.key + ":" + kv.value));
         } catch (Exception ex) {
             ex.printStackTrace();
         }
     }
-        
+
+    public static <T> T waitUntilStoreIsQueryable(final String storeName,
+                                                  final QueryableStoreType<T> queryableStoreType,
+                                                  final KafkaStreams streams) throws InterruptedException {
+        int times = 0;
+        while (times++ < 1000000) {
+            try {
+                return streams.store(storeName, queryableStoreType);
+            } catch (InvalidStateStoreException ignored) {
+                System.out.println("wait 100 ms. times:" + times);
+                // store not yet ready for querying
+                Thread.sleep(100);
+            }
+        }
+        throw new RuntimeException("Out of times");
+    }
+
     private static void sendStockPrices(Properties kafkaProps, String stockKey, int...prices) {
         try (KafkaProducer<String, Integer> producer = new KafkaProducer<>(kafkaProps, Serdes.String().serializer(), Serdes.Integer().serializer())) {
             for (int price: prices) {
+                TimeUnit.MILLISECONDS.sleep(500);
                 ProducerRecord<String, Integer> record = new ProducerRecord<>(TOPIC_PRICE, stockKey + (price % 5), price);
                 System.out.println("offset:" + producer.send(record).get(10, TimeUnit.SECONDS).offset());
             }

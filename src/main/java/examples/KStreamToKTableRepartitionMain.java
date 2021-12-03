@@ -38,11 +38,7 @@ public class KStreamToKTableRepartitionMain {
             createTopicIfNotExist(kafkaProps, TOPIC_STOCK, TOPIC_PRICE);
         
             StreamsBuilder builder = new StreamsBuilder();
-            KStream<String, String> priceStream = builder.stream(TOPIC_PRICE, Consumed.with(Serdes.String(), Serdes.String()))
-                                                        .selectKey((k,v) -> { // join won't happen without this selectKey
-                                                            System.out.println("select key for the price:" + v);
-                                                            return STOCK_VT_KEY; 
-                                                        });
+            KStream<String, String> priceStream = builder.stream(TOPIC_PRICE, Consumed.with(Serdes.String(), Serdes.String()));
             KTable<String, String> stockTable = builder.table(TOPIC_STOCK, Consumed.with(Serdes.String(), Serdes.String()));
             
             priceStream.join(stockTable, (price, stockName) -> price + "/" + stockName)
