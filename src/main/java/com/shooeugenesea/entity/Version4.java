@@ -12,15 +12,10 @@ import java.util.UUID;
 @AllArgsConstructor
 @Entity
 @Data
-public class Person {
+public class Version4 {
 
     @Id
     private UUID id;
-    private String name;
-
-    public Person(String name) {
-        this.name = name;
-        this.id = UUID.randomUUID();
-    }
+    private String build;
 
 }
